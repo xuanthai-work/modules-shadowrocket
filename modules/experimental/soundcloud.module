@@ -1,0 +1,16 @@
+#!name=SoundCloud Go+
+#!desc=Unlock SoundCloud Go+ features via configuration response modification
+#!author=DHungx
+#!version=1.0.0
+#!last-tested=2025-01-01
+#!homepage=https://github.com/dhungx/modules-shadowrocket
+
+# Required hostnames: api-mobile.soundcloud.com
+# Data format: JSON
+# Status: experimental - not recently verified
+
+[Script]
+SoundCloudGo+=type=http-response,pattern=https://api-mobile.soundcloud.com/configuration/ios,requires-body=1,script-path=scripts/soundcloud/soundcloud.js
+
+[MITM]
+hostname = %APPEND% api-mobile.soundcloud.com

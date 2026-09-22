@@ -1,0 +1,22 @@
+#!name=All-in-One Module
+#!desc=Merged module containing all stable rules and scripts
+#!author=modules-shadowrocket
+
+[Rule]
+AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
+AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
+
+[URL Rewrite]
+(^https?://[\w-]+\.googlevideo\.com/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) $1$2$3 302
+^https?://(www|s)\.youtube\.com/(pagead|ptracking) _ reject-200
+^https?://(www|s)\.youtube\.com/api/stats/ads _ reject-200
+^https?://[\w-]+\.googlevideo\.com/(?!(dclk_video_ads|videoplayback?)).+&oad _ reject-200
+^https?://s\.youtube\.com/api/stats/qoe\?adcontext _ reject-200
+
+[Script]
+deleteHeader = type=http-request, pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers), script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/locket/deleteHeader.js, timeout=60
+revenuecat = type=http-response, pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts$|subscribers\/[^/]+$), script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/locket/locket.js, requires-body=true, max-size=-1, timeout=60
+youtube.response = type=http-response,pattern=^https://youtubei\.googleapis\.com/youtubei/v1/(browse|next|player|search|reel/reel_watch_sequence|guide|account/get_setting|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,engine=script,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/youtube/youtube.response.preview.js,argument="{\"lyricLang\":\"\",\"captionLang\":\"\",\"blockUpload\":false,\"blockImmersive\":false,\"enablePIP\":true,\"enableBackgroundPlay\":true,\"unlockResolution\":true,\"debug\":false}"
+
+[MITM]
+hostname = %APPEND% *.googlevideo.com, api.revenuecat.com, redirector*.googlevideo.com, s.youtube.com, www.youtube.com, youtubei.googleapis.com

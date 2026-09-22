@@ -1,0 +1,27 @@
+#!name=Super Duolingo
+#!desc=Unlock Super Duolingo. May not work due to TLS pinning or API changes.
+#!author=DHungx
+#!version=1.0.0
+#!last-tested=2025-03-01
+#!homepage=https://github.com/dhungx/modules-shadowrocket
+
+# Required hostnames: ios-api-2.duolingo.com, goals-api.duolingo.com, ios-api-cf.duolingo.com
+# Data format: JSON
+# Status: experimental - Duolingo may use TLS pinning which blocks MITM
+# Known bug: super.js line 30 reassigns const variable (will crash on /subscribers/ path)
+
+[General]
+force-http-engine-hosts = *duolingo.com
+
+[Rule]
+DOMAIN-SUFFIX,duolingo.com,Proxy
+DOMAIN-SUFFIX,duolingo.cn,Proxy
+DOMAIN-SUFFIX,duolingo.eu,Proxy
+DOMAIN-SUFFIX,duolingo.io,Proxy
+DOMAIN-SUFFIX,duolingo.tech,Proxy
+
+[Rewrite]
+^https:\/\/(ios-api-2|goals-api|ios-api-cf)\.duolingo\.com\/.*users.* script-path=scripts/duolingo/super.js, requires-body=true, timeout=10, tag=Unlock_Super_Duolingo
+
+[MITM]
+hostname = %APPEND% ios-api-2.duolingo.com, goals-api.duolingo.com, ios-api-cf.duolingo.com

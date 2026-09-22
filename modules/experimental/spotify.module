@@ -1,0 +1,17 @@
+#!name=Spotify Premium (Partial)
+#!desc=Partial Spotify premium unlock via protobuf response modification. Cannot enable high quality audio.
+#!author=DHungx
+#!version=1.0.0
+#!last-tested=2024-04-01
+#!homepage=https://github.com/dhungx/modules-shadowrocket
+
+# Required hostnames: spclient.wg.spotify.com
+# Data format: protobuf/binary
+# Status: experimental - partial functionality only, audio quality limited
+
+[Script]
+# Modify Spotify bootstrap/customization protobuf responses
+spotify-proto = type=http-response,pattern=^https:\/\/spclient\.wg\.spotify\.com\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=scripts/spotify/spotify.js,script-update-interval=0
+
+[MITM]
+hostname = %APPEND% spclient.wg.spotify.com

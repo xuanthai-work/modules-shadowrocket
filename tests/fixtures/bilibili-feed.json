@@ -1,0 +1,26 @@
+{
+  "code": 0,
+  "data": {
+    "items": [
+      {
+        "card_type": "small_cover_v2",
+        "card_goto": "av",
+        "args": { "up_name": "test_uploader" },
+        "title": "Test Video"
+      },
+      {
+        "card_type": "small_cover_v2",
+        "card_goto": "ad_av",
+        "ad_info": { "ad_id": 1 },
+        "args": { "up_name": "ad_sponsor" },
+        "title": "Sponsored Content"
+      },
+      {
+        "card_type": "large_cover_v1",
+        "card_goto": "av",
+        "args": { "up_name": "real_creator" },
+        "title": "Real Video"
+      }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+#!name=YouTube BlockAd
+#!desc=Block YouTube ads, enable PiP and background playback
+#!author=DHungx
+#!version=1.0.0
+#!last-tested=2024-11-24
+#!homepage=https://github.com/dhungx/modules-shadowrocket
+
+# Required hostnames: redirector*.googlevideo.com, *.googlevideo.com, www.youtube.com, s.youtube.com, youtubei.googleapis.com
+# Data format: protobuf/binary
+# Status: stable
+
+[Rule]
+AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
+AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
+
+[URL Rewrite]
+# Remove quality tier restriction
+(^https?://[\w-]+\.googlevideo\.com/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) $1$2$3 302
+# Block video ad overlays
+^https?://[\w-]+\.googlevideo\.com/(?!(dclk_video_ads|videoplayback?)).+&oad _ reject-200
+# Block ad stats tracking
+^https?://(www|s)\.youtube\.com/api/stats/ads _ reject-200
+# Block pagead and ptracking
+^https?://(www|s)\.youtube\.com/(pagead|ptracking) _ reject-200
+# Block ad context QoE stats
+^https?://s\.youtube\.com/api/stats/qoe\?adcontext _ reject-200
+
+[Script]
+# YouTube response handler - processes protobuf responses to remove ads, enable PiP and background play
+youtube.response = type=http-response,pattern=^https://youtubei\.googleapis\.com/youtubei/v1/(browse|next|player|search|reel/reel_watch_sequence|guide|account/get_setting|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,engine=script,script-path=scripts/youtube/youtube.response.preview.js,argument="{\"lyricLang\":\"\",\"captionLang\":\"\",\"blockUpload\":false,\"blockImmersive\":false,\"enablePIP\":true,\"enableBackgroundPlay\":true,\"unlockResolution\":true,\"debug\":false}"
+
+[MITM]
+hostname = %APPEND% redirector*.googlevideo.com,*.googlevideo.com,www.youtube.com,s.youtube.com,youtubei.googleapis.com

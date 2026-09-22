@@ -1,0 +1,16 @@
+{
+  "plan": {
+    "vendor": "apple",
+    "id": "free",
+    "manageable": false,
+    "plan_upsells": [],
+    "plan_id": "free",
+    "upsells": [],
+    "plan_name": "Free"
+  },
+  "features": [
+    { "name": "offline_sync", "enabled": false, "plans": ["mid_tier", "high_tier"] },
+    { "name": "no_audio_ads", "enabled": false, "plans": ["mid_tier", "high_tier"] },
+    { "name": "hq_audio", "enabled": false, "plans": ["high_tier"] }
+  ]
+}

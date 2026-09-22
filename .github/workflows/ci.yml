@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate module syntax & structure
+        run: node tools/validate.js
+
+      - name: Run offline unit tests
+        run: node --test tests/unit/test-scripts.js
+
+      - name: Build all-in-one distribution module
+        run: node tools/build.js
+
+      - name: Verify build artifact is in sync
+        run: |
+          git diff --exit-code dist/all-in-one.module || (echo "ERROR: dist/all-in-one.module is out of sync with source modules. Run 'node tools/build.js' and commit changes." && exit 1)
