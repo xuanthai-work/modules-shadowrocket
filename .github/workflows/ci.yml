@@ -29,4 +29,4 @@ jobs:
 
       - name: Verify build artifacts are in sync
         run: |
-          git diff --exit-code dist/ || (echo "ERROR: Distribution files in dist/ are out of sync with source modules. Run 'node tools/build.js' and commit changes." && exit 1)
+          git diff --exit-code dist/ || (echo "ERROR: Distribution files in dist/ are out of sync with source modules. Run 'node tools/build.js --include-experimental' and commit changes." && exit 1)

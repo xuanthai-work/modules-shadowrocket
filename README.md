@@ -64,11 +64,19 @@ node tools/validate.js
 # 2. Chạy bộ unit test offline (với mock runtime Shadowrocket)
 node --test tests/unit/test-scripts.js
 
-# 3. Build tệp all-in-one.module từ các module stable
+# 3. Build tệp dist/ (bản phát hành hiện tại)
+#    Đây là lệnh chuẩn tái tạo đúng dist/ đã commit và được CI kiểm tra.
+#    Vì modules/stable/ hiện đang rỗng (giai đoạn pre-release), dist/all-in-one.module
+#    được tạo bằng cách merge các module trong modules/experimental/ qua cờ này.
+node tools/build.js --include-experimental
+
+# (Mặc định, không có cờ) chỉ merge modules/stable/. Khi stable/ rỗng, lệnh này
+# sẽ tạo một all-in-one.module rỗng có ghi chú rõ ràng thay vì bundle experimental.
 node tools/build.js
 
-# 4. Build với Base URL tùy chỉnh hoặc release tag
-node tools/build.js --base-url https://raw.githubusercontent.com/<user>/<repo>/v1.0.0
+# 4. Build với Base URL tùy chỉnh hoặc release tag (thêm --include-experimental để
+#    tái tạo đúng bundle như dist/ đã commit)
+node tools/build.js --include-experimental --base-url https://raw.githubusercontent.com/<user>/<repo>/v1.0.0
 ```
 
 ---
