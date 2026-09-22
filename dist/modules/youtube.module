@@ -1,44 +1,36 @@
 #!name=YouTube Premium
-#!desc=YouTube/YouTube Music ad blocker (video + UI ads) with PiP & background playback. Static validation passed; runtime compatibility not verified.
+#!desc=YouTube/YouTube Music ad blocker (video + UI ads) with PiP and background playback. Static validation passed; runtime compatibility not verified.
 #!author=DHungx
 #!version=1.0.0
-#!upstream-date=2026-07-19
+#!upstream-date=2025-05-20
 #!last-tested=unverified
 #!homepage=https://github.com/xuanthai-work/modules-shadowrocket
 
-# Response script: Maasea/sgmodule (Apache-2.0), vendored locally, pinned to commit 65075cd. See DEPENDENCIES.md.
-# Module structure credits: @DivineEngine, @app2smile, @Maasea, @VirgilClyne, @Choler, @bai1zi; merged by @ddgksf2013; shadowrocket port by @deezertidal.
-# Required hostnames: *.googlevideo.com, www.youtube.com, s.youtube.com, youtubei.googleapis.com
-# Data format: protobuf/binary (youtubei) + URL rewrites (googlevideo/youtube ad endpoints)
+# Behavior ported from duyvinh09/Module_IOS All_In_One.conf (not the stale .sgmodule).
+# Script is NOT vendored: that repo has no license. Pinned to commit 34865755.
+# All_In_One.sgmodule still references js/youtube.response.preview.js, which 404s on main; the live file is js/youtube.response.js.
+# Upstream sets a JavaScriptCore engine on the request and a script-engine template on the response. Those parameters are omitted because Shadowrocket does not support an engine parameter.
+# Upstream [Map Local] initplayback&oad is expressed as [URL Rewrite] reject-200 (empty HTTP 200). This build only merges [URL Rewrite].
 # Status: experimental
-# Note: video-layer ads blocked via [URL Rewrite]; UI/metadata ads, PiP & background handled by the protobuf response script.
 
 [Rule]
-# Force YouTube off QUIC/HTTP3 so MITM interception can work (not an ad rule; kept for interception).
 AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
 AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
 
 [URL Rewrite]
-# Block video ad init (googlevideo initplayback &oad) with empty 200 (was [Map Local] upstream)
+# Empty 200 for ad initplayback (upstream [Map Local])
 ^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&oad _ reject-200
-# Block general video ad overlays (leave dclk_video_ads and videoplayback streams intact)
+# Block video ad overlays; leave dclk_video_ads and videoplayback streams intact
 ^https?:\/\/[\w-]+\.googlevideo\.com\/(?!(dclk_video_ads|videoplayback\?)).+&oad _ reject-200
-# Block universal ad stats
 ^https?:\/\/(www|s)\.youtube\.com\/api\/stats\/ads _ reject-200
-# Block pagead / ptracking
 ^https?:\/\/(www|s)\.youtube\.com\/(pagead|ptracking) _ reject-200
-# Block ad-context QoE stats
 ^https?:\/\/s\.youtube\.com\/api\/stats\/qoe\?adcontext _ reject-200
-# Remove quality-tier (ctier=L) restriction
 (^https?:\/\/[\w-]+\.googlevideo\.com\/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) $1$2$3 302
 
 [Script]
-# Response handler: strips UI ads, enables PiP/background, optional caption/lyric translation
-youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.com\/(youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch|log_event|config))(\?(.*))?$,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/youtube/youtube.response.js,argument="{\"lyricLang\":\"off\",\"captionLang\":\"off\",\"blockUpload\":true,\"blockImmersive\":false,\"blockShorts\":true,\"debug\":false}"
-# Request handler: initplayback (googlevideo) caption bootstrap on legit &ack playback
-youtube.request.init = type=http-request,pattern=^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback.+&ack.*,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/youtube/youtube.request.js,argument="{\"captionLang\":\"off\"}"
-# Request handler: log_event (blocks ad/telemetry log events)
-youtube.request.log_event = type=http-request,pattern=^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/youtube/youtube.request.js
+# Same pinned script for request and response, matching All_In_One.conf. Arguments are the conf defaults.
+youtube.request = type=http-request,pattern=^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|reel\/reel_watch_sequence|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/34865755c1aee7ba770c1afa364254d8924cfd85/js/youtube.response.js
+youtube.response = type=http-response,pattern=^https:\/\/youtubei\.googleapis\.com\/(youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch))(\?(.*))?$,requires-body=1,max-size=-1,binary-body-mode=1,script-path=https://raw.githubusercontent.com/duyvinh09/Module_IOS/34865755c1aee7ba770c1afa364254d8924cfd85/js/youtube.response.js,argument="{\"lyricLang\":\"vi\",\"captionLang\":\"vi\",\"blockUpload\":true,\"blockImmersive\":true,\"debug\":false}"
 
 [MITM]
-hostname = %APPEND% -redirector*.googlevideo.com, *.googlevideo.com, www.youtube.com, s.youtube.com, youtubei.googleapis.com
+hostname = %APPEND% *.googlevideo.com, youtubei.googleapis.com, www.youtube.com, s.youtube.com, -redirector*.googlevideo.com

@@ -8,6 +8,7 @@ Tài liệu liệt kê tất cả các script và thư viện được tải t�
 | ------ | --- | ----- | -------- | -------------- | ------------- | ----- |
 | `bilibili-proto.js` | `https://raw.githubusercontent.com/app2smile/rules/master/js/bilibili-proto.js` | `app2smile` | Lọc quảng cáo dạng protobuf trong Bilibili | ❌ Unpinned (`master`) | 🔴 Cao (Mã có thể thay đổi bất kỳ lúc nào, giải mã traffic người dùng) | Đã **comment out** mặc định trong `bilibili.module` |
 | `bilibili_dynamic.js` | `https://raw.githubusercontent.com/yjqiang/surge_scripts/main/scripts/bilibili/bilibili_dynamic.js` | `yjqiang` | Lọc quảng cáo động thái Bilibili | ❌ Unpinned (`main`) | 🔴 Cao (Không kiểm soát được commit) | Đã **comment out** mặc định trong `bilibili.module` |
+| `youtube.response.js` | `https://raw.githubusercontent.com/duyvinh09/Module_IOS/34865755c1aee7ba770c1afa364254d8924cfd85/js/youtube.response.js` | `duyvinh09` | YouTube protobuf response/request (ads, PiP, background) | ✅ Pinned commit `34865755` (2025-05-20) | 🟠 Trung bình (đã ghim commit, nhưng script đọc/sửa body MITM) | **Không vendor.** Repo nguồn không có LICENSE. Cả `youtube.request` và `youtube.response` trỏ cùng URL này |
 
 > [!WARNING]
 > Không chạy các script trỏ trực tiếp đến nhánh `master` hoặc `main` của repository bên thứ ba khi bật MITM. Các script này có toàn quyền đọc/chỉnh sửa nội dung mạng của hostname được cấu hình.
@@ -16,13 +17,11 @@ Tài liệu liệt kê tất cả các script và thư viện được tải t�
 
 | Thư viện | Tệp chứa | Phiên bản | Bản quyền | Ghi chú |
 | -------- | -------- | --------- | --------- | ------- |
-| Maasea YouTube scripts | `scripts/youtube/youtube.response.js`, `scripts/youtube/youtube.request.js` | commit `65075cd` (2026-07) | Apache-2.0 | **Vendored** từ [`Maasea/sgmodule`](https://github.com/Maasea/sgmodule) (Apache-2.0). Copy nguyên trạng, ghim commit hash, có header ghi nguồn/giấy phép ở đầu mỗi file. Không hotlink `master`. |
-| `@bufbuild/protobuf` | `scripts/youtube/youtube.response.js`, `scripts/youtube/youtube.request.js` | v1.x runtime | Apache-2.0 | Đã bundle sẵn bên trong script YouTube của Maasea |
 | `protobuf.js` | `scripts/spotify/spotify.js` | v6.x bundle | BSD-3-Clause | Đã bundle trong script Spotify |
 | `MagicJS` | `scripts/bilibili/bilibili_json.js` | v2.2.3.3 | MIT | Thư viện shim đa nền tảng (Surge/Loon/QX/Node) nhúng ở cuối file |
 
 > [!NOTE]
-> **YouTube (Maasea) license decision**: `Maasea/sgmodule` phát hành theo **Apache-2.0**, cho phép sao chép & phân phối lại kèm chỉnh sửa nếu giữ attribution và ghi chú thay đổi (Apache-2.0 §4). Do đó hai script YouTube được **vendor cục bộ** thay vì hotlink, ghim ở commit `65075cdb388fc5e3094afd7e7314c67b243f3525` để tái lập được. Build system tự sinh URL raw GitHub tuyệt đối trong `dist/`.
+> **YouTube (duyvinh09) license decision**: [`duyvinh09/Module_IOS`](https://github.com/duyvinh09/Module_IOS) không có file LICENSE và README không nêu giấy phép (GitHub API: license not found). Script cũng không chứa header bản quyền. Vì vậy **không copy** `js/youtube.response.js` vào `scripts/youtube/`. Module trỏ external URL đã ghim commit `34865755c1aee7ba770c1afa364254d8924cfd85`. Bản Maasea từng vendor trước đó đã được gỡ.
 
 ## 3. Khuyến nghị & Nguyên tắc an toàn
 * Tất cả script của module phải ưu tiên lưu trữ nội bộ (`scripts/`) hoặc trỏ đến bản release có gắn tag/commit hash cố định.

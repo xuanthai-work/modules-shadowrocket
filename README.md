@@ -22,7 +22,7 @@ Toàn bộ module hiện tại đều được xếp loại **`Experimental`** d
 
 | Module | Mô tả | Định dạng | Tệp cấu hình nguồn | Tệp cài đặt (Dist) |
 | ------ | ----- | --------- | ------------------ | ------------------ |
-| **YouTube BlockAd** | Hỗ trợ PiP, phát nền, chặn quảng cáo video | Protobuf | [`modules/experimental/youtube.module`](modules/experimental/youtube.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/youtube.module) |
+| **YouTube Premium** | Hỗ trợ PiP, phát nền, chặn quảng cáo video | Protobuf | [`modules/experimental/youtube.module`](modules/experimental/youtube.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/youtube.module) |
 | **Locket Gold** | Giả lập quyền truy cập Locket Gold | JSON | [`modules/experimental/locket.module`](modules/experimental/locket.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/locket.module) |
 | **Spotify Premium** | Mở một số tính năng client-side (chuyển bài) | Protobuf | [`modules/experimental/spotify.module`](modules/experimental/spotify.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/spotify.module) |
 | **Super Duolingo** | Giả lập Super Duolingo | JSON | [`modules/experimental/duolingo.module`](modules/experimental/duolingo.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/duolingo.module) |
