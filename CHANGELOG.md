@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Standalone Bilibili Module**: Extracted standalone `modules/experimental/bilibili.module` from the old monolithic config.
 
 ### Changed
+- **Replaced YouTube implementation** with the newer Maasea (`Maasea/sgmodule`, Apache-2.0) reference. Vendored `scripts/youtube/youtube.response.js` and `scripts/youtube/youtube.request.js` locally (pinned to commit `65075cd`, with provenance/license headers) and removed the stale `youtube.response.preview.js` fork. Added the `youtube.response`, `youtube.request.init`, and `youtube.request.log_event` handlers; response pattern now also covers `log_event` and `config`. Replaced the Surge-style `{{{...}}}` template arguments with concrete default JSON, dropped `engine=script`, and removed the outdated `[URL Rewrite]` ad rules (now handled inside the protobuf scripts). MITM narrowed to `*.googlevideo.com, youtubei.googleapis.com`; QUIC/UDP reject rules kept as an interception aid. Runtime not verified.
 - Reorganized `js/` directory into structured `scripts/{app}/` with consistent naming conventions.
 - Standardized metadata headers (`#!name`, `#!desc`, `#!author`, `#!version`, `#!last-tested`, `#!homepage`) across all modules.
 - Replaced unrendered `{{{...}}}` placeholders in YouTube module arguments with sensible defaults (`debug: false`, `enablePIP: true`).
