@@ -4,7 +4,7 @@
 
 | Module | Upstream Date | Runtime Verified | App Version | iOS | Shadowrocket | Status | Notes |
 | ------ | ------------- | ---------------- | ----------- | --- | ------------ | ------ | ----- |
-| YouTube (Music) Enhance | 2026-07-19 | ❌ Unverified | Not tested | Not tested | Not tested | 🧪 Experimental | Vendored Maasea scripts (Apache-2.0, pinned `65075cd`): protobuf response/request handlers for ad removal, PiP & background playback. URL-Rewrite ad rules from old fork removed. Static validation passed; runtime compatibility not verified. |
+| YouTube Premium | 2026-07-19 | ❌ Unverified | Not tested | Not tested | Not tested | 🧪 Experimental | "Full blocker" superset: `[URL Rewrite]` video-ad blocking plus vendored Maasea handlers `youtube.response`, `youtube.request.init`, `youtube.request.log_event` (Apache-2.0, pinned `65075cd`). Static validation passed; runtime compatibility not verified. |
 | Locket Gold | 2025-04-03 | ❌ Unverified | Not tested | Not tested | Not tested | 🧪 Experimental | RevenueCat endpoint modification; depends on MITM decryption. Static validation passed; runtime compatibility not verified. |
 | Spotify Premium | 2024-04-01 | ❌ Unverified | Not tested | Not tested | Not tested | 🧪 Experimental | Partial unlock only (extreme audio quality and backend auth impossible via MITM-only). Static validation passed; runtime compatibility not verified. |
 | Duolingo Super | 2025-03-01 | ❌ Unverified | Not tested | Not tested | Not tested | ⚠ Partial | Likely blocked by TLS pinning in recent app builds. Fixed JS syntax `const body` reassignment; client-side unlock only. |

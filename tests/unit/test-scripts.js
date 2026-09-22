@@ -167,6 +167,20 @@ const REQUIRED_YT_ENDPOINTS = [
   'guide', 'account/get_setting', 'get_watch', 'log_event', 'config'
 ];
 
+// Extract non-comment rule lines from a named section (e.g. '[URL Rewrite]').
+function parseSectionLines(moduleText, sectionName) {
+  const lines = moduleText.split(/\r?\n/);
+  const out = [];
+  let inSection = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (line.startsWith('[')) { inSection = line.toLowerCase() === sectionName.toLowerCase(); continue; }
+    if (!inSection || !line || line.startsWith('#') || line.startsWith('//')) continue;
+    out.push(line);
+  }
+  return out;
+}
+
 test('YouTube Module - parses and declares all three handlers', () => {
   const text = fs.readFileSync(YT_MODULE, 'utf-8');
   const handlers = parseScriptSection(text);
@@ -211,14 +225,25 @@ test('YouTube Module - response pattern compiles and covers required endpoints',
   }
 });
 
+test('YouTube Module - all [URL Rewrite] regexes compile', () => {
+  const text = fs.readFileSync(YT_MODULE, 'utf-8');
+  const rules = parseSectionLines(text, '[URL Rewrite]');
+  assert.ok(rules.length >= 5, `Expected the video-ad URL Rewrite rules, got ${rules.length}`);
+  const ruleText = rules.join('\n');
+  for (const rule of rules) {
+    const pattern = rule.split(/\s+/)[0];
+    assert.doesNotThrow(() => new RegExp(pattern), `URL Rewrite regex must compile: ${pattern}`);
+  }
+  // In rule patterns, the videoplayback exclusion must be escaped (videoplayback\?), never raw.
+  assert.ok(/videoplayback\\\?/.test(ruleText), 'videoplayback must be escaped as videoplayback\\? in rules');
+  assert.ok(!/videoplayback\?/.test(ruleText), 'rule patterns must not contain an unescaped videoplayback?');
+});
+
 test('YouTube Module - request patterns compile (initplayback + log_event)', () => {
   const text = fs.readFileSync(YT_MODULE, 'utf-8');
   const handlers = parseScriptSection(text);
-  const initPat = handlers['youtube.request.init'].get('pattern');
-  const logPat = handlers['youtube.request.log_event'].get('pattern');
-  let initRe, logRe;
-  assert.doesNotThrow(() => { initRe = new RegExp(initPat); }, 'init pattern must compile');
-  assert.doesNotThrow(() => { logRe = new RegExp(logPat); }, 'log_event pattern must compile');
+  const initRe = new RegExp(handlers['youtube.request.init'].get('pattern'));
+  const logRe = new RegExp(handlers['youtube.request.log_event'].get('pattern'));
   assert.ok(initRe.test('https://rr1---sn-abc.googlevideo.com/initplayback?foo=1&ack=1'), 'init pattern must match initplayback+ack');
   assert.ok(logRe.test('https://youtubei.googleapis.com/youtubei/v1/log_event'), 'log_event pattern must match');
 });
@@ -239,7 +264,7 @@ test('YouTube dist - build rewrote local paths to absolute raw URLs', () => {
   for (const h of ['youtube.response', 'youtube.request.init', 'youtube.request.log_event']) {
     assert.ok(handlers[h], `dist must contain handler "${h}"`);
     const sp = handlers[h].get('script-path');
-    assert.ok(/^https:\/\/raw\.githubusercontent\.com\/.+\/scripts\/youtube\//.test(sp),
+    assert.ok(/^https:\/\/raw\.githubusercontent\.com\/.+\/scripts\/youtube\/youtube\.(response|request)\.js$/.test(sp),
       `dist handler "${h}" must use an absolute raw URL, got ${sp}`);
   }
   assert.ok(!/script-path=scripts\//.test(text), 'dist must not contain unresolved relative script paths');
