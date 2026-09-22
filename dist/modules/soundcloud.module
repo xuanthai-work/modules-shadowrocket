@@ -11,7 +11,7 @@
 # Status: experimental - not recently verified
 
 [Script]
-SoundCloudGo+=type=http-response,pattern=https://api-mobile.soundcloud.com/configuration/ios,requires-body=1,script-path=scripts/soundcloud/soundcloud.js
+SoundCloudGo+=type=http-response,pattern=https://api-mobile.soundcloud.com/configuration/ios,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/soundcloud/soundcloud.js
 
 [MITM]
 hostname = %APPEND% api-mobile.soundcloud.com

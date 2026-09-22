@@ -12,7 +12,7 @@
 
 [Script]
 # Modify Spotify bootstrap/customization protobuf responses
-spotify-proto = type=http-response,pattern=^https:\/\/spclient\.wg\.spotify\.com\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=scripts/spotify/spotify.js,script-update-interval=0
+spotify-proto = type=http-response,pattern=^https:\/\/spclient\.wg\.spotify\.com\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/spotify/spotify.js,script-update-interval=0
 
 [MITM]
 hostname = %APPEND% spclient.wg.spotify.com

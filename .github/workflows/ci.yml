@@ -27,6 +27,6 @@ jobs:
       - name: Build all-in-one distribution module
         run: node tools/build.js
 
-      - name: Verify build artifact is in sync
+      - name: Verify build artifacts are in sync
         run: |
-          git diff --exit-code dist/all-in-one.module || (echo "ERROR: dist/all-in-one.module is out of sync with source modules. Run 'node tools/build.js' and commit changes." && exit 1)
+          git diff --exit-code dist/ || (echo "ERROR: Distribution files in dist/ are out of sync with source modules. Run 'node tools/build.js' and commit changes." && exit 1)

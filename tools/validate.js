@@ -64,7 +64,7 @@ function checkJsSyntax(jsPath, moduleFile, lineNum) {
   } catch (e) {
     // Extract just the first line of error message
     const msg = e.message.split('\n')[0];
-    warn(moduleFile, lineNum, `JS syntax issue in ${jsPath}: ${msg}`);
+    error(moduleFile, lineNum, `JS syntax error in ${jsPath}: ${msg}`);
   }
 }
 
@@ -78,6 +78,8 @@ function validateModule(filePath) {
 
   let hasName = false;
   let hasDesc = false;
+  let hasAuthor = false;
+  let hasVersion = false;
   let currentSection = null;
 
   console.log(`  Checking ${relFile}...`);
@@ -96,6 +98,8 @@ function validateModule(filePath) {
     // Check metadata
     if (line.startsWith('#!name=')) { hasName = true; continue; }
     if (line.startsWith('#!desc=')) { hasDesc = true; continue; }
+    if (line.startsWith('#!author=')) { hasAuthor = true; continue; }
+    if (line.startsWith('#!version=')) { hasVersion = true; continue; }
     if (line.startsWith('#!') || line.startsWith('#') || line.startsWith('//')) continue;
 
     // Section header detection
@@ -206,6 +210,8 @@ function validateModule(filePath) {
   // Check required metadata
   if (!hasName) error(relFile, 1, 'Missing required metadata: #!name');
   if (!hasDesc) error(relFile, 1, 'Missing required metadata: #!desc');
+  if (!hasAuthor) error(relFile, 1, 'Missing required metadata: #!author');
+  if (!hasVersion) error(relFile, 1, 'Missing required metadata: #!version');
 }
 
 // Main

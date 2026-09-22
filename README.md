@@ -18,27 +18,25 @@
 
 ## 📂 Danh sách Module
 
-### 1. Stable Modules (`modules/stable/`)
+Toàn bộ module hiện tại đều được xếp loại **`Experimental`** do đã vượt qua kiểm tra tĩnh (static validation) nhưng chưa được xác minh hoạt động thực tế trên thiết bị iOS / phiên bản Shadowrocket cụ thể:
 
-| Module | Mô tả | Định dạng | Tệp cấu hình |
-| ------ | ----- | --------- | ------------ |
-| **YouTube BlockAd** | Hỗ trợ Picture-in-Picture (PiP), phát nền, chặn quảng cáo video | Protobuf | [`modules/stable/youtube.module`](modules/stable/youtube.module) |
-| **Locket Gold** | Giả lập quyền truy cập Locket Gold qua RevenueCat | JSON | [`modules/stable/locket.module`](modules/stable/locket.module) |
+| Module | Mô tả | Định dạng | Tệp cấu hình nguồn | Tệp cài đặt (Dist) |
+| ------ | ----- | --------- | ------------------ | ------------------ |
+| **YouTube BlockAd** | Hỗ trợ PiP, phát nền, chặn quảng cáo video | Protobuf | [`modules/experimental/youtube.module`](modules/experimental/youtube.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/youtube.module) |
+| **Locket Gold** | Giả lập quyền truy cập Locket Gold | JSON | [`modules/experimental/locket.module`](modules/experimental/locket.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/locket.module) |
+| **Spotify Premium** | Mở một số tính năng client-side (chuyển bài) | Protobuf | [`modules/experimental/spotify.module`](modules/experimental/spotify.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/spotify.module) |
+| **Super Duolingo** | Giả lập Super Duolingo | JSON | [`modules/experimental/duolingo.module`](modules/experimental/duolingo.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/duolingo.module) |
+| **SoundCloud Go+** | Mở một số tính năng giao diện | JSON | [`modules/experimental/soundcloud.module`](modules/experimental/soundcloud.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/soundcloud.module) |
+| **Bilibili Ad Block** | Chặn quảng cáo, mở 1080P | JSON | [`modules/experimental/bilibili.module`](modules/experimental/bilibili.module) | [Cài đặt (Raw)](https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/dist/modules/bilibili.module) |
 
-### 2. Experimental Modules (`modules/experimental/`)
-
-| Module | Mô tả | Giới hạn / Trạng thái | Tệp cấu hình |
-| ------ | ----- | --------------------- | ------------ |
-| **Spotify Premium** | Mở một số tính năng client-side (chuyển bài) | ⚠ Không hỗ trợ Extreme Audio (do mã hóa server-side) | [`modules/experimental/spotify.module`](modules/experimental/spotify.module) |
-| **Super Duolingo** | Giả lập Super Duolingo | ⚠ Có thể bị chặn bởi TLS Pinning trên app mới | [`modules/experimental/duolingo.module`](modules/experimental/duolingo.module) |
-| **SoundCloud Go+** | Mở một số tính năng giao diện | 🧪 Server-side audio stream chưa được xác thực | [`modules/experimental/soundcloud.module`](modules/experimental/soundcloud.module) |
-| **Bilibili Ad Block** | Chặn quảng cáo, mở 1080P | 🧪 Phụ thuộc vào MagicJS; script protobuf ngoài đã comment out | [`modules/experimental/bilibili.module`](modules/experimental/bilibili.module) |
+> [!NOTE]
+> Khi một module được người dùng/maintainer kiểm thử thực tế và xác nhận hoạt động ổn định trên iOS & Shadowrocket, module đó sẽ được chuyển vào `modules/stable/`.
 
 ---
 
 ## 🚀 Hướng dẫn cài đặt vào Shadowrocket
 
-### Cách 1: Sử dụng gói All-in-One (Tổng hợp các module Stable)
+### Cách 1: Sử dụng gói All-in-One (Tổng hợp)
 1. Trong Shadowrocket, mở **Cấu hình (Configuration)** -> **Mô-đun (Module)**.
 2. Nhấn biểu tượng dấu `+` ở góc trên cùng.
 3. Dán liên kết sau:
@@ -48,7 +46,8 @@
 4. Nhấn **Xác nhận (OK)** và kích hoạt module.
 
 ### Cách 2: Cài từng module riêng lẻ
-Sao chép URL raw của tệp `.module` tương ứng từ thư mục `modules/stable/` hoặc `modules/experimental/` và thêm vào mục Module trong app.
+Sao chép URL raw của tệp tương ứng từ thư mục phân phối **`dist/modules/`** (đã được build với `script-path` tuyệt đối) và dán vào mục Module của Shadowrocket.
+*Không sử dụng trực tiếp tệp trong `modules/` vì các tệp nguồn sử dụng đường dẫn tương đối nội bộ.*
 
 ---
 

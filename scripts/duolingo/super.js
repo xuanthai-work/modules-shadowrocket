@@ -1,5 +1,5 @@
 const url = $request.url;
-const body = JSON.parse($response.body);
+let body = JSON.parse($response.body);
 
 if (url.includes("/users/")) {
     console.log(`🔓 Unlocking Super Duolingo for: ${body.username}`);

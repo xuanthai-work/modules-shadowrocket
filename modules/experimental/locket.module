@@ -2,12 +2,13 @@
 #!desc=Unlock Locket Gold via RevenueCat response modification
 #!author=DHungx
 #!version=1.0.0
-#!last-tested=2025-04-03
-#!homepage=https://github.com/dhungx/modules-shadowrocket
+#!upstream-date=2025-04-03
+#!last-tested=unverified
+#!homepage=https://github.com/xuanthai-work/modules-shadowrocket
 
 # Required hostnames: api.revenuecat.com
 # Data format: JSON
-# Status: stable
+# Status: experimental
 
 [Script]
 # Modify RevenueCat subscription response to inject Gold entitlement

@@ -1,6 +1,7 @@
 #!name=All-in-One Module
-#!desc=Merged module containing all stable rules and scripts
+#!desc=Merged module (Experimental/Pre-release: Locket & YouTube). Static validation passed; runtime compatibility not verified.
 #!author=modules-shadowrocket
+#!version=1.0.0
 
 [Rule]
 AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT

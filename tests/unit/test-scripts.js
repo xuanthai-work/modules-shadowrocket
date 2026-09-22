@@ -111,19 +111,20 @@ test('Duolingo Super Script - user profile endpoint', () => {
   assert.strictEqual(modified.user.isSuper, true);
 });
 
-test('Duolingo Super Script - known bug verification (const reassignment in /subscribers/ path)', () => {
+test('Duolingo Super Script - subscribers endpoint (regression check for const reassignment fix)', () => {
   const scriptPath = path.join(ROOT_DIR, 'scripts/duolingo/super.js');
   const scriptCode = fs.readFileSync(scriptPath, 'utf-8');
 
-  const { env } = createMockEnv('https://ios-api-2.duolingo.com/subscribers/12345', {});
+  const { env, result } = createMockEnv('https://ios-api-2.duolingo.com/subscribers/12345', {});
   const context = vm.createContext(env);
 
-  // In super.js, 'const body = JSON.parse($response.body);' followed by 'body = { ... }' throws TypeError: Assignment to constant variable.
-  assert.throws(
+  assert.doesNotThrow(
     () => vm.runInContext(scriptCode, context),
-    /Assignment to constant variable/,
-    'Expected TypeError on subscribers path due to reassigning const body'
+    'Script must not throw TypeError on subscribers path after let body fix'
   );
+  assert.ok(result.body, 'Expected $done with modified subscriber payload');
+  const modified = JSON.parse(result.body);
+  assert.ok(modified.subscriber && modified.subscriber.entitlements && modified.subscriber.entitlements.Super);
 });
 
 test('Protobuf Scripts - static syntax loading check only', () => {

@@ -2,9 +2,16 @@
  * tools/build.js
  * 
  * Build system for modules-shadowrocket.
- * Merges all .module files in modules/stable/ into a single dist/all-in-one.module file.
  * 
- * Usage: node tools/build.js [--base-url URL] [--timestamp] [--tag TAG]
+ * Functions:
+ * 1. Reads each source module (from modules/stable/ and modules/experimental/) and generates
+ *    a standalone module in dist/modules/<name>.module with resolved absolute script-path URLs.
+ * 2. Merges target modules into a deterministic dist/all-in-one.module.
+ *    - By default, merges modules from modules/stable/.
+ *    - If modules/stable/ is empty (e.g. pre-release phase), falls back to building target experimental modules
+ *      with a clear pre-release/experimental header, or accepts --include-experimental flag.
+ * 
+ * Usage: node tools/build.js [--base-url URL] [--timestamp] [--tag TAG] [--include-experimental]
  */
 
 const fs = require('fs');
@@ -12,7 +19,9 @@ const path = require('path');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const STABLE_DIR = path.join(ROOT_DIR, 'modules', 'stable');
+const EXPERIMENTAL_DIR = path.join(ROOT_DIR, 'modules', 'experimental');
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
+const DIST_MODULES_DIR = path.join(DIST_DIR, 'modules');
 
 const DEFAULT_BASE_URL = 'https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main';
 
@@ -21,6 +30,7 @@ const args = process.argv.slice(2);
 let baseUrl = DEFAULT_BASE_URL;
 let includeTimestamp = false;
 let tag = null;
+let includeExperimental = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--base-url' && args[i + 1]) {
@@ -29,33 +39,76 @@ for (let i = 0; i < args.length; i++) {
     includeTimestamp = true;
   } else if (args[i] === '--tag' && args[i + 1]) {
     tag = args[++i];
-    // Replace /main/ or /refs/heads/main/ with tag in base URL
     baseUrl = baseUrl.replace(/\/main\b/, `/${tag}`);
+  } else if (args[i] === '--include-experimental') {
+    includeExperimental = true;
   }
 }
 
-// Ensure dist directory exists
-if (!fs.existsSync(DIST_DIR)) {
-  fs.mkdirSync(DIST_DIR, { recursive: true });
-}
-
-// Merged data structures — Sets ensure deduplication
-const merged = {
-  general: new Set(),
-  rule: new Set(),
-  urlRewrite: new Set(),
-  rewrite: new Set(),
-  script: new Set(),
-  mitmHosts: new Set(),
-  moduleComments: []  // preserved #! comments (non-header)
-};
+// Ensure dist directories exist
+if (!fs.existsSync(DIST_DIR)) fs.mkdirSync(DIST_DIR, { recursive: true });
+if (!fs.existsSync(DIST_MODULES_DIR)) fs.mkdirSync(DIST_MODULES_DIR, { recursive: true });
 
 const KNOWN_SECTIONS = ['[General]', '[Rule]', '[URL Rewrite]', '[Rewrite]', '[Script]', '[MITM]'];
 
 /**
- * Parse a single module file and merge its sections into the merged data.
+ * Build a standalone module into dist/modules/<filename> with absolute script-path.
  */
-function processModuleFile(filePath) {
+function buildStandaloneModule(srcPath, outPath) {
+  const content = fs.readFileSync(srcPath, 'utf-8');
+  const lines = content.split(/\r?\n/);
+  const outLines = [];
+
+  for (const rawLine of lines) {
+    let line = rawLine;
+    if (line.includes('script-path=scripts/')) {
+      line = line.replace(/script-path=scripts\//g, `script-path=${baseUrl}/scripts/`);
+    }
+    outLines.push(line);
+  }
+
+  fs.writeFileSync(outPath, outLines.join('\n'), 'utf-8');
+}
+
+/**
+ * Build all standalone modules in dist/modules/
+ */
+function buildAllStandaloneModules() {
+  const allModules = [];
+  for (const dir of [STABLE_DIR, EXPERIMENTAL_DIR]) {
+    if (fs.existsSync(dir)) {
+      const files = fs.readdirSync(dir)
+        .filter(f => f.endsWith('.module'))
+        .sort();
+      for (const f of files) {
+        allModules.push({ name: f, src: path.join(dir, f) });
+      }
+    }
+  }
+
+  console.log(`Building ${allModules.length} standalone distribution module(s)...`);
+  for (const mod of allModules) {
+    const outPath = path.join(DIST_MODULES_DIR, mod.name);
+    buildStandaloneModule(mod.src, outPath);
+    console.log(`  -> dist/modules/${mod.name}`);
+  }
+}
+
+/**
+ * Merged container for all-in-one module.
+ */
+function createMergedContainer() {
+  return {
+    general: new Set(),
+    rule: new Set(),
+    urlRewrite: new Set(),
+    rewrite: new Set(),
+    script: new Set(),
+    mitmHosts: new Set()
+  };
+}
+
+function processModuleFileForMerge(filePath, container) {
   const content = fs.readFileSync(filePath, 'utf-8');
   const lines = content.split(/\r?\n/);
   let currentSection = null;
@@ -64,19 +117,8 @@ function processModuleFile(filePath) {
     const line = rawLine.trim();
     if (!line) continue;
 
-    // Skip module-specific metadata headers (we generate our own)
-    if (line.startsWith('#!name=') || line.startsWith('#!desc=') ||
-        line.startsWith('#!author=') || line.startsWith('#!version=') ||
-        line.startsWith('#!last-tested=') || line.startsWith('#!homepage=') ||
-        line.startsWith('#!url=') || line.startsWith('#!icon=')) {
-      continue;
-    }
-
-    // Preserve other #! comments (e.g. #!icon)
-    if (line.startsWith('#!')) {
-      merged.moduleComments.push(line);
-      continue;
-    }
+    // Skip metadata headers
+    if (line.startsWith('#!')) continue;
 
     // Detect section headers
     if (line.startsWith('[') && line.endsWith(']')) {
@@ -85,12 +127,11 @@ function processModuleFile(filePath) {
       continue;
     }
 
-    // Skip pure comment lines within sections
+    // Skip comment lines
     if (line.startsWith('#') || line.startsWith('//')) continue;
 
     if (!currentSection) continue;
 
-    // Rewrite relative script-path to absolute URL
     let processedLine = line;
     if (processedLine.includes('script-path=scripts/')) {
       processedLine = processedLine.replace(
@@ -101,19 +142,19 @@ function processModuleFile(filePath) {
 
     switch (currentSection) {
       case '[General]':
-        merged.general.add(processedLine);
+        container.general.add(processedLine);
         break;
       case '[Rule]':
-        merged.rule.add(processedLine);
+        container.rule.add(processedLine);
         break;
       case '[URL Rewrite]':
-        merged.urlRewrite.add(processedLine);
+        container.urlRewrite.add(processedLine);
         break;
       case '[Rewrite]':
-        merged.rewrite.add(processedLine);
+        container.rewrite.add(processedLine);
         break;
       case '[Script]':
-        merged.script.add(processedLine);
+        container.script.add(processedLine);
         break;
       case '[MITM]':
         if (processedLine.toLowerCase().startsWith('hostname')) {
@@ -122,7 +163,7 @@ function processModuleFile(filePath) {
             let hostsStr = processedLine.slice(eqIdx + 1);
             hostsStr = hostsStr.replace(/%(?:APPEND|INSERT)%/gi, '');
             const hosts = hostsStr.split(',').map(h => h.trim()).filter(Boolean);
-            hosts.forEach(h => merged.mitmHosts.add(h));
+            hosts.forEach(h => container.mitmHosts.add(h));
           }
         }
         break;
@@ -131,36 +172,44 @@ function processModuleFile(filePath) {
 }
 
 /**
- * Generate the merged all-in-one module file.
+ * Build the unified all-in-one.module
  */
-function build() {
-  // Find all stable module files
-  if (!fs.existsSync(STABLE_DIR)) {
-    console.error(`Error: stable modules directory not found: ${STABLE_DIR}`);
-    process.exit(1);
+function buildAllInOne() {
+  const container = createMergedContainer();
+
+  // Determine source modules to merge
+  let sourceFiles = [];
+  if (fs.existsSync(STABLE_DIR)) {
+    sourceFiles = fs.readdirSync(STABLE_DIR)
+      .filter(f => f.endsWith('.module'))
+      .sort()
+      .map(f => path.join(STABLE_DIR, f));
   }
 
-  const files = fs.readdirSync(STABLE_DIR)
-    .filter(f => f.endsWith('.module'))
-    .sort()  // deterministic ordering
-    .map(f => path.join(STABLE_DIR, f));
-
-  if (files.length === 0) {
-    console.warn('Warning: No .module files found in modules/stable/');
+  let isExperimentalBuild = false;
+  // If no stable modules yet, fallback to target experimental modules (Locket & YouTube) for pre-release build
+  if (sourceFiles.length === 0) {
+    isExperimentalBuild = true;
+    const targetExperimental = ['locket.module', 'youtube.module'];
+    sourceFiles = targetExperimental
+      .map(name => path.join(EXPERIMENTAL_DIR, name))
+      .filter(p => fs.existsSync(p))
+      .sort();
   }
 
-  console.log(`Processing ${files.length} stable module(s)...`);
-  for (const file of files) {
-    console.log(`  - ${path.basename(file)}`);
-    processModuleFile(file);
+  console.log(`\nMerging ${sourceFiles.length} module(s) into all-in-one.module ${isExperimentalBuild ? '(Pre-release / Experimental)' : ''}...`);
+  for (const file of sourceFiles) {
+    console.log(`  + ${path.basename(file)}`);
+    processModuleFileForMerge(file, container);
   }
 
-  // Build output lines
   const out = [];
-
   out.push('#!name=All-in-One Module');
-  out.push('#!desc=Merged module containing all stable rules and scripts');
+  out.push(isExperimentalBuild
+    ? '#!desc=Merged module (Experimental/Pre-release: Locket & YouTube). Static validation passed; runtime compatibility not verified.'
+    : '#!desc=Merged module containing all stable rules and scripts.');
   out.push('#!author=modules-shadowrocket');
+  out.push(`#!version=1.0.0`);
 
   if (includeTimestamp) {
     const now = new Date();
@@ -168,47 +217,51 @@ function build() {
     out.push(`# Build: ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`);
   }
 
-  // Sections — each sorted for determinism
-  if (merged.general.size > 0) {
+  if (container.general.size > 0) {
     out.push('', '[General]');
-    out.push(...Array.from(merged.general).sort());
+    out.push(...Array.from(container.general).sort());
   }
 
-  if (merged.rule.size > 0) {
+  if (container.rule.size > 0) {
     out.push('', '[Rule]');
-    out.push(...Array.from(merged.rule).sort());
+    out.push(...Array.from(container.rule).sort());
   }
 
-  if (merged.urlRewrite.size > 0) {
+  if (container.urlRewrite.size > 0) {
     out.push('', '[URL Rewrite]');
-    out.push(...Array.from(merged.urlRewrite).sort());
+    out.push(...Array.from(container.urlRewrite).sort());
   }
 
-  if (merged.rewrite.size > 0) {
+  if (container.rewrite.size > 0) {
     out.push('', '[Rewrite]');
-    out.push(...Array.from(merged.rewrite).sort());
+    out.push(...Array.from(container.rewrite).sort());
   }
 
-  if (merged.script.size > 0) {
+  if (container.script.size > 0) {
     out.push('', '[Script]');
-    out.push(...Array.from(merged.script).sort());
+    out.push(...Array.from(container.script).sort());
   }
 
-  if (merged.mitmHosts.size > 0) {
+  if (container.mitmHosts.size > 0) {
     out.push('', '[MITM]');
-    const sorted = Array.from(merged.mitmHosts).sort();
+    const sorted = Array.from(container.mitmHosts).sort();
     out.push(`hostname = %APPEND% ${sorted.join(', ')}`);
   }
 
-  out.push(''); // trailing newline
+  out.push('');
 
   const outputPath = path.join(DIST_DIR, 'all-in-one.module');
   fs.writeFileSync(outputPath, out.join('\n'), 'utf-8');
-  console.log(`\nBuilt: ${outputPath}`);
-  console.log(`  Rules: ${merged.rule.size}`);
-  console.log(`  URL Rewrites: ${merged.urlRewrite.size}`);
-  console.log(`  Scripts: ${merged.script.size}`);
-  console.log(`  MITM Hosts: ${merged.mitmHosts.size}`);
+  console.log(`\nBuilt all-in-one: ${outputPath}`);
+  console.log(`  Rules: ${container.rule.size}`);
+  console.log(`  URL Rewrites: ${container.urlRewrite.size}`);
+  console.log(`  Scripts: ${container.script.size}`);
+  console.log(`  MITM Hosts: ${container.mitmHosts.size}`);
 }
 
-build();
+function main() {
+  buildAllStandaloneModules();
+  buildAllInOne();
+}
+
+main();
