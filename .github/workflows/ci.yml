@@ -25,7 +25,7 @@ jobs:
         run: node --test tests/unit/test-scripts.js
 
       - name: Build all-in-one distribution module
-        run: node tools/build.js
+        run: node tools/build.js --include-experimental
 
       - name: Verify build artifacts are in sync
         run: |

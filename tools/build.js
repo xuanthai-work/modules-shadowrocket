@@ -7,9 +7,11 @@
  * 1. Reads each source module (from modules/stable/ and modules/experimental/) and generates
  *    a standalone module in dist/modules/<name>.module with resolved absolute script-path URLs.
  * 2. Merges target modules into a deterministic dist/all-in-one.module.
- *    - By default, merges modules from modules/stable/.
- *    - If modules/stable/ is empty (e.g. pre-release phase), falls back to building target experimental modules
- *      with a clear pre-release/experimental header, or accepts --include-experimental flag.
+ *    - By default, merges modules from modules/stable/ only.
+ *    - With --include-experimental, merges modules/stable/ + modules/experimental/.
+ *    - If there are no modules to merge (e.g. modules/stable/ is empty and --include-experimental
+ *      is not set), writes an explicit empty all-in-one.module that documents why it is empty
+ *      instead of silently merging an arbitrary subset of modules.
  * 
  * Usage: node tools/build.js [--base-url URL] [--timestamp] [--tag TAG] [--include-experimental]
  */
@@ -71,18 +73,24 @@ function buildStandaloneModule(srcPath, outPath) {
 }
 
 /**
+ * Return sorted absolute paths of .module files in a directory (empty array if missing).
+ */
+function getModuleFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir)
+    .filter(f => f.endsWith('.module'))
+    .sort()
+    .map(f => path.join(dir, f));
+}
+
+/**
  * Build all standalone modules in dist/modules/
  */
 function buildAllStandaloneModules() {
   const allModules = [];
   for (const dir of [STABLE_DIR, EXPERIMENTAL_DIR]) {
-    if (fs.existsSync(dir)) {
-      const files = fs.readdirSync(dir)
-        .filter(f => f.endsWith('.module'))
-        .sort();
-      for (const f of files) {
-        allModules.push({ name: f, src: path.join(dir, f) });
-      }
+    for (const src of getModuleFiles(dir)) {
+      allModules.push({ name: path.basename(src), src });
     }
   }
 
@@ -174,40 +182,62 @@ function processModuleFileForMerge(filePath, container) {
 /**
  * Build the unified all-in-one.module
  */
+function writeEmptyAllInOne() {
+  const outputPath = path.join(DIST_DIR, 'all-in-one.module');
+  const out = [
+    '#!name=All-in-One Module',
+    '#!desc=No modules merged: modules/stable/ is empty and --include-experimental was not set. ' +
+      'Re-run "node tools/build.js --include-experimental" to merge experimental modules. ' +
+      'This file intentionally contains no rules or scripts.',
+    '#!author=modules-shadowrocket',
+    '#!version=1.0.0',
+    ''
+  ];
+  fs.writeFileSync(outputPath, out.join('\n'), 'utf-8');
+  console.warn('\n[build] modules/stable/ is empty and --include-experimental was not set.');
+  console.warn('[build] No modules to merge; wrote an explicit empty all-in-one.module.');
+  console.log(`\nBuilt all-in-one: ${outputPath} (empty)`);
+}
+
 function buildAllInOne() {
   const container = createMergedContainer();
 
-  // Determine source modules to merge
-  let sourceFiles = [];
-  if (fs.existsSync(STABLE_DIR)) {
-    sourceFiles = fs.readdirSync(STABLE_DIR)
-      .filter(f => f.endsWith('.module'))
-      .sort()
-      .map(f => path.join(STABLE_DIR, f));
-  }
+  // Determine source modules to merge.
+  //   - Always include stable modules.
+  //   - Include experimental modules only when --include-experimental is set.
+  const stableFiles = getModuleFiles(STABLE_DIR);
+  const experimentalFiles = includeExperimental ? getModuleFiles(EXPERIMENTAL_DIR) : [];
 
-  let isExperimentalBuild = false;
-  // If no stable modules yet, fallback to target experimental modules (Locket & YouTube) for pre-release build
+  const sourceFiles = [...stableFiles, ...experimentalFiles]
+    .sort((a, b) => path.basename(a).localeCompare(path.basename(b)));
+
+  // Explicit handling when there is nothing to merge (avoids a misleading "all-in-one").
   if (sourceFiles.length === 0) {
-    isExperimentalBuild = true;
-    const targetExperimental = ['locket.module', 'youtube.module'];
-    sourceFiles = targetExperimental
-      .map(name => path.join(EXPERIMENTAL_DIR, name))
-      .filter(p => fs.existsSync(p))
-      .sort();
+    writeEmptyAllInOne();
+    return;
   }
 
-  console.log(`\nMerging ${sourceFiles.length} module(s) into all-in-one.module ${isExperimentalBuild ? '(Pre-release / Experimental)' : ''}...`);
+  const includesExperimental = experimentalFiles.length > 0;
+  const stableEmpty = stableFiles.length === 0;
+
+  console.log(`\nMerging ${sourceFiles.length} module(s) into all-in-one.module${includesExperimental ? ' (includes experimental)' : ''}...`);
   for (const file of sourceFiles) {
     console.log(`  + ${path.basename(file)}`);
     processModuleFileForMerge(file, container);
   }
 
+  let desc;
+  if (stableEmpty && includesExperimental) {
+    desc = '#!desc=Merged module (EXPERIMENTAL ONLY — no stable modules exist yet). Static validation passed; runtime compatibility not verified.';
+  } else if (includesExperimental) {
+    desc = '#!desc=Merged module containing all stable modules plus experimental modules. Static validation passed; experimental runtime compatibility not verified.';
+  } else {
+    desc = '#!desc=Merged module containing all stable rules and scripts.';
+  }
+
   const out = [];
   out.push('#!name=All-in-One Module');
-  out.push(isExperimentalBuild
-    ? '#!desc=Merged module (Experimental/Pre-release: Locket & YouTube). Static validation passed; runtime compatibility not verified.'
-    : '#!desc=Merged module containing all stable rules and scripts.');
+  out.push(desc);
   out.push('#!author=modules-shadowrocket');
   out.push(`#!version=1.0.0`);
 

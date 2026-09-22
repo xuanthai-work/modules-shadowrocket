@@ -80,6 +80,8 @@ function validateModule(filePath) {
   let hasDesc = false;
   let hasAuthor = false;
   let hasVersion = false;
+  let hasLastTested = false;
+  let hasHomepage = false;
   let currentSection = null;
 
   console.log(`  Checking ${relFile}...`);
@@ -100,6 +102,8 @@ function validateModule(filePath) {
     if (line.startsWith('#!desc=')) { hasDesc = true; continue; }
     if (line.startsWith('#!author=')) { hasAuthor = true; continue; }
     if (line.startsWith('#!version=')) { hasVersion = true; continue; }
+    if (line.startsWith('#!last-tested=')) { hasLastTested = true; continue; }
+    if (line.startsWith('#!homepage=')) { hasHomepage = true; continue; }
     if (line.startsWith('#!') || line.startsWith('#') || line.startsWith('//')) continue;
 
     // Section header detection
@@ -177,11 +181,21 @@ function validateModule(filePath) {
           }
         }
 
-        // Check regex pattern
+        // Check regex pattern (key=value form)
         const patMatch = line.match(/pattern=([^,\s]+)/);
         if (patMatch) {
           if (!isValidRegex(patMatch[1])) {
             error(relFile, lineNum, `Invalid regex in pattern: ${patMatch[1]}`);
+          }
+        }
+
+        // Check direct inline regex in [Rewrite] (e.g. "<url-regex> script-path=..." or
+        // "<url-regex> <action>"). These lines have no "pattern=" key and are not
+        // named script definitions (which contain "type=").
+        if (currentSection === '[Rewrite]' && !patMatch && !/\btype=/.test(line)) {
+          const firstToken = line.split(/\s+/)[0];
+          if (firstToken && !isValidRegex(firstToken)) {
+            error(relFile, lineNum, `Invalid regex in Rewrite: ${firstToken}`);
           }
         }
 
@@ -212,6 +226,8 @@ function validateModule(filePath) {
   if (!hasDesc) error(relFile, 1, 'Missing required metadata: #!desc');
   if (!hasAuthor) error(relFile, 1, 'Missing required metadata: #!author');
   if (!hasVersion) error(relFile, 1, 'Missing required metadata: #!version');
+  if (!hasLastTested) error(relFile, 1, 'Missing required metadata: #!last-tested');
+  if (!hasHomepage) error(relFile, 1, 'Missing required metadata: #!homepage');
 }
 
 // Main

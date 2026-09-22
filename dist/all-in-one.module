@@ -1,23 +1,59 @@
 #!name=All-in-One Module
-#!desc=Merged module (Experimental/Pre-release: Locket & YouTube). Static validation passed; runtime compatibility not verified.
+#!desc=Merged module (EXPERIMENTAL ONLY — no stable modules exist yet). Static validation passed; runtime compatibility not verified.
 #!author=modules-shadowrocket
 #!version=1.0.0
+
+[General]
+force-http-engine-hosts = *duolingo.com
 
 [Rule]
 AND,((DOMAIN,youtubei.googleapis.com), (PROTOCOL,UDP)),REJECT
 AND,((DOMAIN-SUFFIX,googlevideo.com), (PROTOCOL,UDP)),REJECT
+DOMAIN-SUFFIX,duolingo.cn,Proxy
+DOMAIN-SUFFIX,duolingo.com,Proxy
+DOMAIN-SUFFIX,duolingo.eu,Proxy
+DOMAIN-SUFFIX,duolingo.io,Proxy
+DOMAIN-SUFFIX,duolingo.tech,Proxy
 
 [URL Rewrite]
 (^https?://[\w-]+\.googlevideo\.com/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) $1$2$3 302
+(^https?:\/\/app\.biliintl.com\/intl\/.+)(&sim_code=\d+)(.+) - 302 $1$3
+^https://api.bilibili.com/pgc/season/player/cards - reject-dict
+^https://app.bilibili.com/x/v2/search/defaultwords - reject-dict
+^https://app.bilibili.com/x/v2/splash/show - reject-dict
 ^https?://(www|s)\.youtube\.com/(pagead|ptracking) _ reject-200
 ^https?://(www|s)\.youtube\.com/api/stats/ads _ reject-200
 ^https?://[\w-]+\.googlevideo\.com/(?!(dclk_video_ads|videoplayback?)).+&oad _ reject-200
 ^https?://s\.youtube\.com/api/stats/qoe\?adcontext _ reject-200
+^https?:\/\/api\.bilibili\.com\/pgc\/season\/app\/related\/recommend\? - reject-dict
+^https?:\/\/api\.bilibili\.com\/x\/vip\/ads\/material\/report - reject-dict
+^https?:\/\/api\.vc\.bilibili\.com\/search_svr\/v\d\/Search\/recommend_words - reject
+^https?:\/\/api\.vc\.bilibili\.com\/topic_svr\/v1\/topic_svr - reject-dict
+^https?:\/\/app\.bilibili\.com\/bilibili\.app\.interface\.v1\.Search\/Default - reject
+^https?:\/\/app\.bilibili\.com\/x\/resource\/ip - reject
+^https?:\/\/app\.bilibili\.com\/x\/resource\/top\/activity - reject-dict
+^https?:\/\/manga\.bilibili\.com\/twirp\/comic\.v\d\.Comic\/(Flash|ListFlash) - reject-dict
+
+[Rewrite]
+^https:\/\/(ios-api-2|goals-api|ios-api-cf)\.duolingo\.com\/.*users.* script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/duolingo/super.js, requires-body=true, timeout=10, tag=Unlock_Super_Duolingo
 
 [Script]
+SoundCloudGo+=type=http-response,pattern=https://api-mobile.soundcloud.com/configuration/ios,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/soundcloud/soundcloud.js
+bangumi_ads=type=http-response,pattern=^https?:\/\/api\.(bilibili|biliapi)\.(com|net)\/pgc\/page\/bangumi,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+cinema_ads=type=http-response,pattern=^https?:\/\/api\.(bilibili|biliapi)\.(com|net)\/pgc\/page\/cinema\/tab\?,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
 deleteHeader = type=http-request, pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts|subscribers), script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/locket/deleteHeader.js, timeout=60
+dynamic_ads=type=http-response,pattern=^https?:\/\/api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/dynamic_(history|new)\?,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+feed_ads=type=http-response,pattern=^https?:\/\/app\.bilibili\.com\/x\/v2\/feed\/index,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+forced_skin=type=http-response,pattern=^https?:\/\/app\.bilibili\.com\/x\/resource\/show\/skin\?,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+live_ads=type=http-response,pattern=^https?:\/\/api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+mine_customize=type=http-response,pattern=^https?:\/\/app\.bilibili\.com\/x\/v2\/account\/mine,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+quality_unlock=type=http-response,pattern=^https?:\/\/app\.bilibili\.com\/x\/v2\/account\/myinfo\?,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
 revenuecat = type=http-response, pattern=^https:\/\/api\.revenuecat\.com\/.+\/(receipts$|subscribers\/[^/]+$), script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/locket/locket.js, requires-body=true, max-size=-1, timeout=60
+search_square=type=http-response,pattern=^https://app.bilibili.com/x/v2/search/square,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+splash_ads=type=http-response,pattern=^https:\/\/app\.bilibili\.com\/x\/v2\/splash\/list,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
+spotify-proto = type=http-response,pattern=^https:\/\/spclient\.wg\.spotify\.com\/(bootstrap\/v1\/bootstrap|user-customization-service\/v1\/customize)$,requires-body=1,binary-body-mode=1,max-size=0,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/spotify/spotify.js,script-update-interval=0
+tab_customize=type=http-response,pattern=^https?:\/\/app\.bilibili\.com\/x\/resource\/show\/tab,requires-body=1,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/bilibili/bilibili_json.js
 youtube.response = type=http-response,pattern=^https://youtubei\.googleapis\.com/youtubei/v1/(browse|next|player|search|reel/reel_watch_sequence|guide|account/get_setting|get_watch),requires-body=1,max-size=-1,binary-body-mode=1,engine=script,script-path=https://raw.githubusercontent.com/xuanthai-work/modules-shadowrocket/main/scripts/youtube/youtube.response.preview.js,argument="{\"lyricLang\":\"\",\"captionLang\":\"\",\"blockUpload\":false,\"blockImmersive\":false,\"enablePIP\":true,\"enableBackgroundPlay\":true,\"unlockResolution\":true,\"debug\":false}"
 
 [MITM]
-hostname = %APPEND% *.googlevideo.com, api.revenuecat.com, redirector*.googlevideo.com, s.youtube.com, www.youtube.com, youtubei.googleapis.com
+hostname = %APPEND% *.googlevideo.com, -*cdn*.biliapi.net, -*tracker*.biliapi.net, -broadcast.chat.bilibili.com, api-mobile.soundcloud.com, api.biliapi.net, api.bilibili.com, api.live.bilibili.com, api.revenuecat.com, api.vc.bilibili.com, app.bilibili.com, goals-api.duolingo.com, grpc.biliapi.net, ios-api-2.duolingo.com, ios-api-cf.duolingo.com, manga.bilibili.com, redirector*.googlevideo.com, s.youtube.com, spclient.wg.spotify.com, www.youtube.com, youtubei.googleapis.com

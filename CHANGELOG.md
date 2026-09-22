@@ -29,4 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed critical syntax error in `all-in-one.conf` where `[Script]` was corrupted as `Script]`.
 - Resolved fragmented multiple `[MITM]`, `[Script]`, and `[URL Rewrite]` blocks into a unified build process.
 - Replaced hardcoded `raw.githubusercontent.com/dhungx/.../main/` URLs with relative paths and dynamic build base URLs.
-- Documented known `TypeError: Assignment to constant variable` bug in Duolingo script on `/subscribers/` endpoint.
+- Fixed `TypeError: Assignment to constant variable` in Duolingo `super.js` on the `/subscribers/` endpoint by declaring `body` with `let` instead of `const`; removed the now-stale "known bug" note from `modules/experimental/duolingo.module`.
+- `tools/build.js`: `--include-experimental` now merges `modules/stable/` + `modules/experimental/` (no hardcoded module list); an empty `modules/stable/` without the flag now produces an explicit, clearly-labelled empty `all-in-one.module` instead of a misleading partial merge.
+- `tools/validate.js`: now requires `#!last-tested` and `#!homepage` metadata (in addition to `#!name`, `#!desc`, `#!author`, `#!version`) and validates direct inline regex patterns in `[Rewrite]` sections.

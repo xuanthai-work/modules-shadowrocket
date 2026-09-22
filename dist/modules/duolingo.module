@@ -9,7 +9,6 @@
 # Required hostnames: ios-api-2.duolingo.com, goals-api.duolingo.com, ios-api-cf.duolingo.com
 # Data format: JSON
 # Status: experimental - Duolingo may use TLS pinning which blocks MITM
-# Known bug: super.js line 30 reassigns const variable (will crash on /subscribers/ path)
 
 [General]
 force-http-engine-hosts = *duolingo.com
